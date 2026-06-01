@@ -12,33 +12,49 @@ def download_file(url, local_path):
 
 def handler(job):
     job_input = job['input']
-    audio_url = job_input.get('audio_url')
+    action = job_input.get('action', 'swap') # 'swap' or 'split'
+    audio_base64 = job_input.get('audio_base64')
     model_name = job_input.get('model_name', 'jamaican_artist.pth')
     
-    if not audio_url:
-        return {"error": "Missing audio_url in input"}
+    if not audio_base64:
+        return {"error": "Missing audio_base64 in input"}
     
-    # 1. Download the Suno MP3
-    print("Downloading source audio...")
+    # 1. Decode the MP3 from Base64
+    print(f"Executing action: {action}")
     os.makedirs("/tmp/audio", exist_ok=True)
     source_path = "/tmp/audio/source.mp3"
-    download_file(audio_url, source_path)
+    
+    with open(source_path, "wb") as f:
+        f.write(base64.b64decode(audio_base64))
     
     # 2. Split Vocals and Beat using Demucs
     print("Splitting audio with Demucs...")
-    # Demucs output will go to /tmp/audio/separated/htdemucs/source/
+    # Demucs output will go to /tmp/audio/htdemucs/source/
     subprocess.run(["demucs", "-n", "htdemucs", "-o", "/tmp/audio", source_path], check=True)
     
     vocals_path = "/tmp/audio/htdemucs/source/vocals.wav"
     beat_path = "/tmp/audio/htdemucs/source/no_vocals.wav"
     
-    # 3. Swap Voice using RVC (Placeholder logic)
+    if action == "split":
+        print("Action is SPLIT. Returning isolated tracks...")
+        with open(vocals_path, "rb") as fv:
+            vocals_b64 = base64.b64encode(fv.read()).decode('utf-8')
+        with open(beat_path, "rb") as fb:
+            beat_b64 = base64.b64encode(fb.read()).decode('utf-8')
+            
+        return {
+            "status": "SUCCESS",
+            "vocals_base64": vocals_b64,
+            "beat_base64": beat_b64
+        }
+        
+    # 3. Swap Voice using RVC (If action is swap)
     print(f"Applying RVC Voice Model: {model_name}...")
     cloned_vocals_path = "/tmp/audio/cloned_vocals.wav"
     
     # --- RVC INFERENCE SCRIPT WOULD RUN HERE ---
     # Example: subprocess.run(["python", "rvc/infer_cli.py", "--input", vocals_path, "--model", model_name, "--output", cloned_vocals_path])
-    # For now, we will just pass through the vocals to simulate the pipeline
+    # For now, we simulate the swap pipeline
     cloned_vocals_path = vocals_path 
     
     # 4. Merge New Vocals with Original Beat
