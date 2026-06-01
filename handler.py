@@ -30,7 +30,7 @@ def handler(job):
     # 2. Split Vocals and Beat using Demucs
     print("Splitting audio with Demucs...")
     # Demucs output will go to /tmp/audio/htdemucs/source/
-    subprocess.run(["demucs", "-n", "htdemucs", "-o", "/tmp/audio", source_path], check=True)
+    subprocess.run(["demucs", "--two-stems", "vocals", "-n", "htdemucs", "-o", "/tmp/audio", source_path], check=True)
     
     vocals_path = "/tmp/audio/htdemucs/source/vocals.wav"
     beat_path = "/tmp/audio/htdemucs/source/no_vocals.wav"
