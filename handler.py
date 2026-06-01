@@ -38,10 +38,17 @@ def handler(job):
     beat_path = f"/tmp/audio/htdemucs/{job_id}/no_vocals.wav"
     
     if action == "split":
-        print("Action is SPLIT. Returning isolated tracks...")
-        with open(vocals_path, "rb") as fv:
+        print("Action is SPLIT. Converting to MP3 and returning isolated tracks...")
+        vocals_mp3 = f"/tmp/audio/htdemucs/{job_id}/vocals.mp3"
+        beat_mp3 = f"/tmp/audio/htdemucs/{job_id}/no_vocals.mp3"
+        
+        # Compress to MP3
+        AudioSegment.from_file(vocals_path).export(vocals_mp3, format="mp3", bitrate="192k")
+        AudioSegment.from_file(beat_path).export(beat_mp3, format="mp3", bitrate="192k")
+        
+        with open(vocals_mp3, "rb") as fv:
             vocals_b64 = base64.b64encode(fv.read()).decode('utf-8')
-        with open(beat_path, "rb") as fb:
+        with open(beat_mp3, "rb") as fb:
             beat_b64 = base64.b64encode(fb.read()).decode('utf-8')
             
         return {
