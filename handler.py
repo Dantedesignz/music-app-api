@@ -19,21 +19,23 @@ def handler(job):
     if not audio_base64:
         return {"error": "Missing audio_base64 in input"}
     
+    job_id = job.get('id', 'default_job')
+    
     # 1. Decode the MP3 from Base64
-    print(f"Executing action: {action}")
+    print(f"Executing action: {action} for job {job_id}")
     os.makedirs("/tmp/audio", exist_ok=True)
-    source_path = "/tmp/audio/source.mp3"
+    source_path = f"/tmp/audio/{job_id}.mp3"
     
     with open(source_path, "wb") as f:
         f.write(base64.b64decode(audio_base64))
     
     # 2. Split Vocals and Beat using Demucs
     print("Splitting audio with Demucs...")
-    # Demucs output will go to /tmp/audio/htdemucs/source/
+    # Demucs output will go to /tmp/audio/htdemucs/{job_id}/
     subprocess.run(["demucs", "--two-stems", "vocals", "-n", "htdemucs", "-o", "/tmp/audio", source_path], check=True)
     
-    vocals_path = "/tmp/audio/htdemucs/source/vocals.wav"
-    beat_path = "/tmp/audio/htdemucs/source/no_vocals.wav"
+    vocals_path = f"/tmp/audio/htdemucs/{job_id}/vocals.wav"
+    beat_path = f"/tmp/audio/htdemucs/{job_id}/no_vocals.wav"
     
     if action == "split":
         print("Action is SPLIT. Returning isolated tracks...")
@@ -50,7 +52,7 @@ def handler(job):
         
     # 3. Swap Voice using RVC (If action is swap)
     print(f"Applying RVC Voice Model: {model_name}...")
-    cloned_vocals_path = "/tmp/audio/cloned_vocals.wav"
+    cloned_vocals_path = f"/tmp/audio/cloned_vocals_{job_id}.wav"
     
     # --- RVC INFERENCE SCRIPT WOULD RUN HERE ---
     # Example: subprocess.run(["python", "rvc/infer_cli.py", "--input", vocals_path, "--model", model_name, "--output", cloned_vocals_path])
@@ -59,7 +61,7 @@ def handler(job):
     
     # 4. Merge New Vocals with Original Beat
     print("Mixing final track...")
-    final_output_path = "/tmp/audio/final_song.mp3"
+    final_output_path = f"/tmp/audio/final_song_{job_id}.mp3"
     
     beat = AudioSegment.from_file(beat_path)
     vocals = AudioSegment.from_file(cloned_vocals_path)
