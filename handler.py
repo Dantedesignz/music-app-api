@@ -43,8 +43,8 @@ def handler(job):
         beat_mp3 = f"/tmp/audio/htdemucs/{job_id}/no_vocals.mp3"
         
         # Compress to MP3
-        AudioSegment.from_file(vocals_path).export(vocals_mp3, format="mp3", bitrate="192k")
-        AudioSegment.from_file(beat_path).export(beat_mp3, format="mp3", bitrate="192k")
+        AudioSegment.from_file(vocals_path).export(vocals_mp3, format="mp3", bitrate="128k")
+        AudioSegment.from_file(beat_path).export(beat_mp3, format="mp3", bitrate="128k")
         
         with open(vocals_mp3, "rb") as fv:
             vocals_b64 = base64.b64encode(fv.read()).decode('utf-8')
